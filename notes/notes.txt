@@ -1,0 +1,366 @@
+Latest -- views.py -- CRUD
+
+class LeadRetrieveUpdateDestroyView(RetrieveApiView,UpdateApiView,DestroyApiView):
+
+    authentication_classes =[authentication.TokenAuthentication]
+    
+    permission_classes = [permissions.IsAuthenticated]
+
+    serializer_class = LeadSerializer -- to givedata
+
+    queryset = Lead.objects.all() -- to get data
+
+
+
+create -- CreateAPIView -- serializer_class = UserSerializer, no need of post
+======    =============
+
+----- serializer_class
+      ----------------
+
+rest_framework --> generics --> CreateApiView --> serializer_class --> def post() ---- inherit this.
+
+class ApiSignupView(CreateAPIView):
+
+    serializer_class = UserSerializer -- to give data
+
+
+list -- complete list -- ListAPIView -- no need of get
+====    =============
+
+----- queryset
+      --------
+
+update -- UpdateApiView -- serializer_class = UserSerializer
+======    =============
+
+----- serializer_class
+      ----------------
+
+retrieve -- RetrieveApiView 
+========    ===============
+
+----- queryset
+      --------
+
+destroy -- DestroyApiView
+======    ===============
+
+
+
+
+
+
+Converting to rest_framework
+============================
+
+We need to redirect the project's urls.py file to the api app.
+
+create a file in api -- urls.py
+
+In api --> urls.py
+==================
+
+
+from django.urls import path
+from api import views
+
+urlpatterns = [
+
+    path('register/', views.ApiSignupView.as_view()), # url is given in APIDOC. So, in FundTracker urls.py, we just give the api/ which is mentionned in APIDOC, not in urls.py inside api app
+
+    
+]
+
+
+view - ApiView
+Seializer -- process -- serialization, deserialization
+Authentication -- BasicAuthentication, TokenAuthentication
+Permissions -- IsAdminUser, IsAuthenticated, Custom Permission(Overriding existing method has_permission, has_object_permission-- parameters(self, request, view, obj)).
+
+
+
+
+
+
+
+
+
+
+
+Bootstrap shortcuts
+===================
+
+row = .row + Enter
+column = .col-4*3 +Enter
+
+makemigrations - file converts to a query file.
+migrate - executes the query.
+run in power shell to see the database inside vs code.
+
+
+views.py
+========
+
+from django.shortcuts import render
+
+from django.views.generic import View
+
+from expense.forms import ExpenseCreateForm
+
+# Create your views here.
+
+# ExpenseAdd
+# ExpenseList
+# ExpenseDetail
+# ExpenseUpdate
+# ExpenseDelete
+# ExpenseSummary(filter)
+
+# old method
+
+# class ExpenseCreateView(View):
+
+#     def get(self, request, *args, **kwargs):
+
+#         form = ExpenseCreateForm()  # object
+
+#         return render(request, "expense_add.html", {"form": form})
+
+
+# new method
+
+class ExpenseCreateView(View):
+
+    template_name = "expense_add.html"
+
+    form_class = ExpenseCreateForm
+
+    def get(self, request, *args, **kwargs):
+
+        # step 1 - create form_instance
+
+        form = self.form_class()
+
+        return render(request, self.template_name, {"form":form})
+    
+    # sending response - request itself - using render function.
+    # render must have atleast 2 paraeters -- response, template
+    # client request is converted by python into its readable format like dict, list, str etc.
+
+
+--------------------------------
+
+django - template language - syntax - {{}} or {%  %}
+
+
+{{}} -- display - data from view which are passed through context.
+
+{%  %} -- all other cases -- eg. csrf_token
+
+-----------------------------------
+
+csrf_token
+==========
+This token is passed wit get method to the cilent. When post method activates from client side, csrf_token is passed to server with post method. 
+---------------------------------------
+
+# render -- request, template_name, context
+# redirect -- name in urls.py
+
+-----------------------------------
+
+filter using id to get detailed view -- give the int a variable name usually pk in urls.py and then use it in views.py get function. id value is passed from url to view.
+
+------------------------------------
+
+Form 
+====
+Form can be used to create login pages since we don't need to create or update the data(username, password) instead we only need to verify their existance
+initial -- to initialise
+----------------------------------
+
+ModelForm
+=========
+instance -- to initialise
+
+We can use ModelForm when we need to create or update a databaase.
+
+-- fields are automatically populated -- referring the models.py
+-- set of default validation are avilable 
+-- form_instance.save() -- no cleaned data and no update orm query
+ 
+
+# Using ModelForm - create, update --- Meta, model, fields --- Don't change these variables.
+
+class ExpenseCreateForm(forms.ModelForm):
+
+    class Meta:
+
+        model = Transaction ---- (mandatory)
+
+        fields = ["title", "amount", "category", "payment_method", "priority"]
+
+        or
+
+        exclude = ("created_date",)  ---- (end with a comma, since this single value has tobe taken as a tuple)
+
+----------------------------------------------------------------
+
+Template Inheritance - base.html
+====================
+
+To add a comon set of styles to multiple pages of a webapp. Eg. Navbar.
+
+selected - html
+===============
+
+used to keep an item selected inthe dropdown
+
+-------------------------------------------------------------
+
+static files - app > static > css, images, js
+=============
+
+css, images, js
+
+static > css > style.css - to create own theme
+
+important
+=========
+
+static > css > paste min file on folder name to add bootswatch theme file.
+
+bootswatch
+==========
+
+download - .min.css file
+
+------------------------------------------------------
+
+Auth - app -- app like expense. and to get all functionalities 
+              we choose User class.
+====
+
+django.contrib.auth --django  already has auth app. So, no need to create again.
+we need to create a form for this model - User - as we did for last app.
+
+models--
+======
+class AbstractBaseUser(models.Model):
+    password
+
+class AbstractUser(AbstractBaseUser):
+    username
+    email
+    first_name
+    last_name
+
+class User(AbstractUser):
+    
+    --- inherits so that we can get all fields.
+-------------------------------------------------
+
+password encryption -- create_user
+===================
+
+In view,
+
+--- don't use form_instance.save() after validation.
+--- use the format for usual form insteadof Modelform.
+--- Modelform - to create or update
+
+def post(self,..):
+
+
+    data = from_instance.cleaned_data
+    model_name.objects.create_user(**data)
+
+----------------------
+
+in View,
+
+for login/logout purpose -- don't use login and logout class_name
+
+-------------------------
+
+Sign in
+=======
+
+To convert entered password while signing in into encrypted mode and then matching it with the existing password.
+We use - authenticate - function. - import
+
+-- def authenticate(request, username=None, password=None)
+
+-- return u_obj if credentias are valid else return None
+
+
+----------------
+
+To start session 
+================
+
+def login(request, user_object)
+
+request.user -- to get active user in current session.
+we can give it in views or html
+
+def logout(request)
+
+-------------------------------------------------------
+
+
+User - Model Relation
+=====================
+
+Delete "sqllite" file and "0001_initial.py" file from migrations folder.
+
+If user need to add multiple rows of data then use Foreign Key - 1:mandatory
+If user need to add only one row of data, eg, personal details, job details, other profile details -- Use 1:1
+
+While adding Foreign Key add an attribute ondelete=CASCADE, SET_NULL, etc.
+
+CASCADE - User deletes his account --> All data deletes.
+SET_NULL - User deletes his account --> User set as Null.
+
+--------------------------------------------
+
+Then makemigrations and migrate.
+
+Then 
+1. signup
+2. login
+
+All other actions will result in error for now.
+in the transaction form  use fields not except to ensure owner is not active in that form.
+
+Integrity error - database error 
+Null comes in a field which should not be null.
+
+in query - model_name.objects.filter(owner=request.user)
+
+--------------------------------------------------
+
+"" without url in urls.py --> localhost - the corresponding page
+
+-------------------------------------------------
+
+Checking login session
+======================
+
+Decorator - It is a normal function that takes function as a parameter(to use decorate we give *args, **kwargs to get and post).
+
+          - inner_function. Similar to Meta class in model form.
+
+We can moify a function without actually modifying it.
+
+We don't need to edit get and post function to check whether authenticated or not.
+
+authenticate method
+===================
+
+        if not request.user.is_authenticated:
+             
+             return redirect("signin")
+
+

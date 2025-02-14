@@ -1,0 +1,87 @@
+{%extends 'base.html'%} 
+<!-- single quotes only -->
+
+{%block main_block%}
+
+
+
+<br>
+    <h1 class="text-center">All Expenses</h1>
+    <br><br>
+    <div class="container">
+        
+        <!-- {{category_filter}} -->
+        <!-- form tag - to take data from template to view -->
+        <form class="col-2 mb-3" action="" method="get">
+            Choose Category: 
+            <select name="category" id="" onchange="this.form.submit()" class="form-select mt-1">
+                
+                <option value="">--Select--</option> 
+
+                <option value="all" {%if selected_category == "all"%} selected {%endif%}>All</option>
+                <!-- selected - helps to keep an option selected in the dropdown -->
+            
+                {%for i in category_filter%}
+                <option value="{{i}}" {%if i == selected_category%} selected {%endif%}>{{i}}</option>
+
+                {%endfor%}
+
+            </select>
+            
+        </form>
+
+        <div class="container">
+
+            <div class="row">
+
+                <div class="col-4"></div>
+                <div class="col-4">
+
+                    <form action=""> <!-- method is not given - so it takes get method from the corres. class -->
+                        <input type="text" class="form-control" name="search-text"><br>
+                        <button type="submit">Search</button><br><br>
+                    </form>
+
+                </div>
+                <div class="col-4"></div>
+
+            </div>
+
+        </div>
+
+        <table class="table rounded border border-3 p-3">
+
+            <tr>
+
+                <th>Title</th>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Payment Method</th>
+                <th>Priority</th>
+                <th>Action</th>
+
+            </tr>
+
+            {%for i in data%}
+
+            <tr>
+
+                <td>{{i.title}}</td>
+                <td>{{i.amount}}</td>
+                <td>{{i.category}}</td>
+                <td>{{i.payment_method}}</td>
+                <td>{{i.priority}}</td>
+                <td><a href="{%url 'detailexpense' i.id%}">view</a></td>
+                <td><a href="{%url 'deleteexpense' i.id%}">Delete</a></td>
+                <td><a href="{%url 'editexpense' i.id%}">Edit</a></td>
+
+
+            </tr>
+
+            {%endfor%}
+
+
+        </table>
+    </div>
+
+{%endblock%}
